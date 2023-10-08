@@ -1,9 +1,16 @@
 import click
+import logging
 import random
+import sys
 import time
 import yaml
 
 from prometheus_client import start_http_server, Gauge
+
+LOG_FORMAT = '%(asctime)s|%(message)s'
+logging.basicConfig(format=LOG_FORMAT, level=logging.DEBUG)
+logger = logging.getLogger('twilioexporter')
+
 
 class TwilioMetric:
     def __init__(self, metric, attribute):
@@ -34,15 +41,16 @@ class TwilioMetric:
 @click.option('-i', '--interval', default=0, type=int)
 @click.option('-p', '--port', default=0, type=int)
 def exporter(configuration_file, interval, port):
-    exporter_config = {}
+    exporter_config = {
         'interval': interval,
         'port': port,
     }
     accounts = []
     metrics = []
     config = yaml.safe_load(configuration_file)
-    for k, v in config['exporter']:
-        exporter_config[k] = v
+    for k, v in config['exporter'].items():
+        if exporter_config[k] == 0:
+            exporter_config[k] = v
 
     if exporter_config['interval'] == 0:
         exporter_config['interval'] = 60
@@ -56,16 +64,17 @@ def exporter(configuration_file, interval, port):
 
     for acct in config['accounts']:
         ta = TwilioAccount(**acct)
-        print(ta.name)
+        logger.info("Account configured: %s" % ta.name)
         accounts.append(ta)
 
-    start_http_server(port)
+    start_http_server(exporter_config['port'])
+    logger.info("HTTP Server started on port %d" % exporter_config['port'])
 
     while True:
-        print("updating metrics")
+        logger.info("updating metrics")
         for m in metrics:
             for a in accounts:
                 m.update(a)
-        time.sleep(interval)
+        time.sleep(exporter_config['interval'])
 
     print("exporter out")
