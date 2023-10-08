@@ -34,7 +34,7 @@ class TwilioMetric:
         self.attribute = attribute
 
     def update(self, account):
-        self.metric.labels(account.name, account.sid).set(getattr(account, self.attribute))
+        self.metric.labels(name=account.name, sid=account.sid).set(getattr(account, self.attribute))
 
 @click.command()
 @click.option('-c', '--configuration-file', default="./twilio-exporter.yml", type=click.File('r'))
