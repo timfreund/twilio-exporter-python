@@ -8,7 +8,8 @@ setup(
     install_requires=[
         'click',
         'prometheus-client',
-        'pyyaml'
+        'pyyaml',
+        'twilio'
     ],
 
     # metadata to display on PyPI

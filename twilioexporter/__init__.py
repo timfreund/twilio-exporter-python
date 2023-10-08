@@ -6,10 +6,12 @@ import time
 import yaml
 
 from prometheus_client import start_http_server, Gauge
+from twilio.rest import Client
 
 LOG_FORMAT = '%(asctime)s|%(message)s'
-logging.basicConfig(format=LOG_FORMAT, level=logging.DEBUG)
+logging.basicConfig(format=LOG_FORMAT, level=logging.WARN)
 logger = logging.getLogger('twilioexporter')
+logger.setLevel(logging.DEBUG)
 
 
 class TwilioMetric:
@@ -23,10 +25,16 @@ class TwilioAccount:
         self.sid = sid
         self.api_key = api_key
         self.api_secret = api_secret
+        self.twilio_client = Client(api_key, api_secret, sid)
 
     @property
     def balance(self):
-        return random.random() * random.randint(0, 1000)
+        # return random.random() * random.randint(0, 1000)
+        balance_list = self.twilio_client.api.v2010.account.balance
+        balance_instance = balance_list.fetch()
+        self.balance_value = float(balance_instance.balance)
+        logger.info("%s %f" % (self.name, self.balance_value))
+        return self.balance_value
 
 class TwilioMetric:
     def __init__(self, metric, attribute):
