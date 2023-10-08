@@ -11,9 +11,9 @@ class TwilioMetric:
         self.attribute = attribute
 
 class TwilioAccount:
-    def __init__(self, name, account_sid, api_key, api_secret):
+    def __init__(self, name, sid, api_key, api_secret):
         self.name = name
-        self.account_sid = account_sid
+        self.sid = sid
         self.api_key = api_key
         self.api_secret = api_secret
 
@@ -27,15 +27,27 @@ class TwilioMetric:
         self.attribute = attribute
 
     def update(self, account):
-        self.metric.labels(account.name, account.account_sid).set(getattr(account, self.attribute))
+        self.metric.labels(account.name, account.sid).set(getattr(account, self.attribute))
 
 @click.command()
 @click.option('-c', '--configuration-file', default="./twilio-exporter.yml", type=click.File('r'))
-def exporter(configuration_file):
+@click.option('-i', '--interval', default=0, type=int)
+@click.option('-p', '--port', default=0, type=int)
+def exporter(configuration_file, interval, port):
+    exporter_config = {}
+        'interval': interval,
+        'port': port,
+    }
     accounts = []
     metrics = []
     config = yaml.safe_load(configuration_file)
-    print(config)
+    for k, v in config['exporter']:
+        exporter_config[k] = v
+
+    if exporter_config['interval'] == 0:
+        exporter_config['interval'] = 60
+    if exporter_config['port'] == 0:
+        exporter_config['port'] = 9130
 
     metrics.append(TwilioMetric(Gauge('twilio_balance',
                                       'Twilio account balance',
@@ -47,12 +59,13 @@ def exporter(configuration_file):
         print(ta.name)
         accounts.append(ta)
 
-    start_http_server(9130)
+    start_http_server(port)
 
     while True:
+        print("updating metrics")
         for m in metrics:
             for a in accounts:
                 m.update(a)
-        time.sleep(5)
+        time.sleep(interval)
 
     print("exporter out")
