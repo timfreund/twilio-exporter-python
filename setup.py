@@ -15,8 +15,8 @@ setup(
     # metadata to display on PyPI
     author="Tim Freund",
     author_email="tim@freunds.net",
-    description="Prometheus Exporter for Twilio",
-    url="",
+    description="Twilio Prometheus Exporter",
+    url="https://github.com/timfreund/twilio-exporter-python",
     entry_points = """\
     [console_scripts]
     twilio-exporter = twilioexporter:exporter
